@@ -26,4 +26,4 @@ $i = 0
     }
 }
 
-$count
+"Valid triangles: $count"

@@ -13,4 +13,4 @@ foreach ($input in $inputs) {
     if ($a + $b -gt $c -and $a + $c -gt $b -and $b + $c -gt $a) {$count++}
 }
 
-$count
+"Valid triangles: $count"
