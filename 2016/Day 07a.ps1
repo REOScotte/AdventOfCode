@@ -13,6 +13,7 @@ foreach ($input in $inputs) {
     $valid = 1
     $DQ = 0
     $abba = 0
+    # the 4 value below seems like it should be 3, but that gives the wrong answer.
     for ($i = 0; $i -lt ($input.Length -4); $i++) {
         if ($input[$i] -eq "[") {$valid = 0}
         if ($input[$i] -eq "]") {$valid = 1}
