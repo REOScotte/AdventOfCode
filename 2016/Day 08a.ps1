@@ -1,38 +1,74 @@
-﻿$inputs = Get-Content '.\Day 07.txt'
+﻿$inputs = Get-Content '.\Day 08.txt'
 #$inputs = @"
-#aba[bab]xyz
-#xyx[xyx]xyx
-#aaa[kek]eke
-#zazbz[bzb]cdb
+#rect 3x2
+#rotate column x=1 by 1
+#rotate row y=0 by 4
+#rotate column x=1 by 1
 #"@
-
-#$inputs = @"
-#ottpscfbgoiyfri   [iwzhojzrpzuinumuwd]   orfroqlcemumqbqqrea
-#"@
-
-
 $inputs = $inputs.Split("`n")
-$answer = 0
 
-foreach ($input in $inputs) {
-    $ssl = 0
-    $abaValid = 1
-    for ($i = 0; $i -lt ($input.Length - 2); $i++) {
-        if ($input[$i] -eq "[") {$abaValid = 0}
-        if ($input[$i] -eq "]") {$abaValid = 1}
-        if ($input[$i] -eq $input[$i + 2] -and $input[$i] -ne $input[$i + 1] -and $abaValid) {
-            $bab = $input[$i + 1] + $input[$i] + $input[$i + 1]
-            $babValid = 0#;$bab
-            for ($j = 0; $j -lt ($input.Length - 2); $j++) {
-                if ($input[$j] -eq "[") {$babValid = 1}
-                if ($input[$j] -eq "]") {$babValid = 0}
-                if ($input[$j] + $input[$j + 1] + $input[$j + 2] -eq $bab -and $babValid) {
-                    $ssl = 1
-                }
-            }
-        }
+$screenX = 50
+$screenY = 6
+
+$screen = New-Object 'char[,]' $screenX, $screenY
+
+for ($y = 0; $y -lt $screenY; $y++) {
+    for ($x = 0; $x -lt $screenX; $x++) {
+        $screen[$x, $y] = '.'
     }
-    if ($ssl) {$answer++}
 }
 
-"Answer: $answer"
+foreach ($input in $inputs) {
+    if ($input.substring(0, 5) -eq 'rect ') {
+        $rectX = $input.split(' ')[1].split('x')[0]
+        $rectY = $input.split('x')[1]
+
+        for ($y = 0; $y -lt $rectY; $y++) {
+            for ($x = 0; $x -lt $rectX; $x++) {
+                $screen[$x, $y] = '#'
+            }
+        }
+        
+    }
+
+    if ($input.substring(0, 8) -eq 'rotate r') {
+        $row = $input.split('=')[1].split(' ')[0]
+        $times = $input.split(' ')[4]
+
+        for ($i = 0; $i -lt $times; $i++) {
+            $t = $screen[($screenX - 1), $row]
+            for ($j = ($screenX - 1); $j -gt 0; $j--) {
+                $screen[$j, $row] = $screen[($j - 1), $row]
+            }
+            $screen[0, $row] = $t
+        }
+
+    }
+
+    if ($input.substring(0, 8) -eq 'rotate c') {
+        $col = $input.split('=')[1].split(' ')[0]
+        $times = $input.split(' ')[4]
+
+        for ($i = 0; $i -lt $times; $i++) {
+            $t = $screen[$col, ($screenY - 1)]
+            for ($j = ($screenY - 1); $j -gt 0; $j--) {
+                $screen[$col, $j] = $screen[$col, ($j - 1)]
+            }
+            $screen[$col, 0] = $t
+        }
+
+    }
+}
+
+$count = 0
+
+for ($y = 0; $y -lt $screenY; $y++) {
+    $row = ''
+    for ($x = 0; $x -lt $screenX; $x++) {
+        if ($screen[$x, $y] -eq '#') {$count++}
+        $row += $screen[$x, $y]
+    }
+    $row
+}
+
+$count
