@@ -1,5 +1,4 @@
-﻿$inputs = Get-Content '.\Day 10.txt'
-$inputs = @"
+﻿$inputs = @"
 value 5 goes to bot 2
 bot 2 gives low to bot 1 and high to bot 0
 value 3 goes to bot 1
@@ -15,54 +14,81 @@ class bot {
     [int]$num
     [int]$low = -1
     [int]$lowMap = -1
+    [string]$lowMapType = ''
     [int]$high = -1
     [int]$highMap = -1
+    [string]$highMapType = ''
 
     bot ([int]$num) {
         $this.num = $num
     }
-    
+
     [void] load([int]$new) {
         if ($new -ge $this.high) {
             $this.low = $this.high
             $this.high = $new
-        }
-        else {
+        } else {
             $this.low = $new
         }
         $this.disburse()
     }
 
-    [void] map([string]$ord, [int]$map) {
+    [void] map([string]$ord, [int]$map, [string]$type) {
         if ($ord -eq 'low') {
             $this.lowMap = $map
-        }
-        else {
+            $this.lowMapType = $type
+        } else {
             $this.highMap = $map
+            $this.highMapType = $type
         }
         $this.disburse()
     }
 
     [void] disburse() {
         if ($this.low -ge 0 -and $this.lowMap -ge 0 -and $this.high -ge 0 -and $this.highMap -ge 0) {
-            $lowDest = $global:bots | Where-Object num -eq $this.lowMap
-            if ($lowDest) {
-                $lowDest.load($this.low)
-            }
-            else {
-                $lowDest = [bot]::New($this.lowMap)
-                $lowDest.load($this.low)
-                $global:bots.Add($lowDest)
+
+            if ($this.lowMapType -eq 'bot') {
+                $lowDest = $global:bots | Where-Object num -eq $this.lowMap
+                if ($lowDest) {
+                    $lowDest.load($this.low)
+                } else {
+                    $lowDest = [bot]::New($this.lowMap)
+                    $lowDest.load($this.low)
+                    $global:bots.Add($lowDest)
+                }
             }
 
-            $highDest = $global:bots | Where-Object num -eq $this.highMap
-            if ($highDest) {
-                $highDest.load($this.high)
+            if ($this.lowMapType -eq 'output') {
+                $lowDest = $global:bins | Where-Object num -eq $this.lowMap
+                if ($lowDest) {
+                    $lowDest.load($this.low)
+                } else {
+                    $lowDest = [bin]::New($this.lowMap)
+                    $lowDest.load($this.low)
+                    $global:bins.Add($lowDest)
+                }
             }
-            else {
-                $highDest = [bot]::New($this.highMap)
-                $highDest.load($this.high)
-                $global:bots.Add($highDest)
+
+            if ($this.highMapType -eq 'bot') {
+                $highDest = $global:bots | Where-Object num -eq $this.highMap
+                if ($highDest) {
+                    $highDest.load($this.high)
+                } else {
+                    $highDest = [bot]::New($this.highMap)
+                    $highDest.load($this.high)
+                    $global:bots.Add($highDest)
+                }
+            }
+
+            if ($this.highMapType -eq 'output') {
+                $highDest = $global:bins | Where-Object num -eq $this.highMap
+                if ($highDest) {
+                    $highDest.load($this.high)
+                } else {
+                    $highDest = [bin]::New($this.highMap)
+                    $highDest.load($this.high)
+                    $global:bins.Add($highDest)
+                }
             }
         }
     }
@@ -93,14 +119,11 @@ foreach ($input in $inputs) {
         $dest = $instruction[5]
 
         $destBot = $bots | Where-Object num -eq $dest
-        if ($destBot) {
-            $destBot.load($chip)
-        }
-        else {
+        if (-not $destBot) {
             $destBot = [bot]::New($dest)
-            $destBot.load($chip)
             $bots.Add($destBot)
         }
+        $destBot.load($chip)
     }
 
     if ($type -eq 'bot') {
@@ -116,50 +139,11 @@ foreach ($input in $inputs) {
             $bots.Add($destBot)
         }
 
-        if ($lowDestType -eq 'bot') {
-            $destBot.map("low", $lowDest)
-        }
-
-        if ($highDestType -eq 'bot') {
-            $destBot.map("high", $highDest)
-        }
-
-        #       if ($lowDestType -eq 'output') {
-        #           $destBin = $bins | Where-Object num -eq $lowDest
-        #           if ($destBin) {
-        #               $destBin.load($bot.low)
-        #           }
-        #           else {
-        #               $destBin = [bin]::New($lowDest)
-        #               $destBin.load($bot.low)
-        #               $bins.Add($destBot)
-        #           }
-        #       }
-        #
-        #       if ($highDestType -eq 'output') {
-        #           $destBin = $bins | Where-Object num -eq $highDest
-        #           if ($destBin) {
-        #               $destBin.load($bot.high)
-        #           }
-        #           else {
-        #               $destBin = [bin]::New($highDest)
-        #               $destBin.load($bot.high)
-        #               $bins.Add($destBot)
-        #           }
-        #       }
-
+        $destBot.map("low", $lowDest, $lowDestType)
+        $destBot.map("high", $highDest, $highDestType)
     }
 
 }
 
-$bots|ft
 $bots|? low -eq 17 | ? high -eq 61 | ft
-$bins
-$inputs = @"
-value 5 goes to bot 2
-bot 2 gives low to bot 1 and high to bot 0
-value 3 goes to bot 1
-bot 1 gives low to output 1 and high to bot 0
-bot 0 gives low to output 2 and high to output 0
-value 2 goes to bot 2
-"@
+($bins |? num -eq 0).value * ($bins |? num -eq 1).value * ($bins |? num -eq 2).value
